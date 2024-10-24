@@ -1,0 +1,70 @@
+/*#include <opencv2/opencv.hpp>
+#include <iostream>
+using namespace cv;
+using namespace std;
+// Read and show the sample.bmp
+int main(void)
+{
+	Mat img = imread("sample.bmp", IMREAD_REDUCED_COLOR_2); // read image to img
+	if (!img.empty()) { // open file success
+		imshow("Display window", img); // show image on a named window
+		waitKey(0); // wait until any key is pressed
+	}
+	else { // fail to open image
+		cout << "Failed to open image!" << endl;
+	}
+}*/
+
+/*#include <opencv2/opencv.hpp>
+using namespace cv;
+// Read and write image
+int main(void) {
+	Mat img = imread("sample.bmp", IMREAD_REDUCED_COLOR_2);
+	if (!img.empty()) { // open file success
+		imshow("window", img);
+		waitKey(0);
+		imwrite("sample_o.jpg", img); // output with jpeg format
+		imwrite("sample_o.tif", img); // output with tif format
+	}
+}*/
+
+#include <opencv2/opencv.hpp>
+#include <iostream>
+using namespace cv;
+using namespace std;
+#define PI 3.14159
+// Rotate image for angle degree using affine transform
+void myRotate(Mat& orgImg, Mat& dstImg, double angle) {
+	double rad = PI * angle / 180.0; // degree to radian
+	Mat M = (Mat_<double>(2, 3) << cos(rad), -sin(rad), 0, sin(rad), cos(rad), 0);
+	warpAffine(orgImg, dstImg, M, orgImg.size() * 2);
+}
+
+void myShorten(Mat& orgImg, Mat& dstImg , double x , double y)
+{
+	Mat M = (Mat_<double>(2, 3) << x , 0 , 0, 0 , y , 0);
+	warpAffine(orgImg, dstImg, M, orgImg.size() * 2);
+}
+
+void myHshear(Mat& orgImg, Mat& dstImg, double x, double y)
+{
+	Mat M = (Mat_<double>(2, 3) << 1, x, 0, y, 1, 0);
+	warpAffine(orgImg, dstImg, M, orgImg.size() * 2);
+}
+// This program is used to rotate the input image
+int main(void) {
+	Mat img = imread("sample.bmp", IMREAD_REDUCED_COLOR_2);
+	if (!img.empty()) { // open file success
+		Mat dstImg;
+		myRotate(img, dstImg, 45);
+		imwrite("sample_rotate.jpg", dstImg);
+		myShorten(img, dstImg , 0.2 , 0.4);
+		imwrite("sample_R5.jpg", dstImg);
+		myHshear(img, dstImg, 0.4, 0);
+		//imshow("旋轉的 image", dstImg);
+		//waitKey(0);
+		imwrite("sample_Hshear.jpg", dstImg);
+	}
+	else cout << "Fail to open image file" << endl;
+	return (0);
+}
