@@ -1,0 +1,147 @@
+/*#include <opencv2/opencv.hpp>
+using namespace cv;
+int main(void) {
+	Mat src = imread("sample.bmp", IMREAD_REDUCED_GRAYSCALE_2);
+	if (!src.empty()) {
+		int r, c;
+		Mat dst = src.clone();
+		for (r = 0; r < src.rows; r++) { // for every row
+			for (c = 0; c < src.cols; c++) { // for every column
+				//Thresholding process
+				if (src.at<uchar>(r, c) > 128) dst.at<uchar>(r, c) = 255;
+				else dst.at<uchar>(r, c) = 0;
+			}
+		}
+		imshow("Source", src);
+		imshow("Destination", dst);
+		waitKey(0);
+	}
+	return 0;
+}*/
+
+
+/*#include <opencv2/opencv.hpp>
+using namespace cv;
+int main(void) {
+	Mat src = imread("sample.bmp", IMREAD_REDUCED_COLOR_2);
+	if (!src.empty()) {
+		int r, c, ch, channels = src.channels();
+		Mat dst = src.clone();
+		for (r = 0; r < src.rows; r++) { // for every row
+			for (c = 0; c < src.cols; c++) { // for every column
+				for (ch = 0; ch < channels; ch++) { // for every channel
+					//Threshold processing by pixel
+					if (src.at<Vec3b>(r, c)[ch] > 128) dst.at<Vec3b>(r, c)[ch] = 255;
+					else dst.at<Vec3b>(r, c)[ch] = 0;
+				}
+			}
+		}
+		imshow("Source", src);
+		imshow("Destination", dst);
+		waitKey(0);
+	}
+	return 0;
+}*/
+
+
+/*#include <opencv2/opencv.hpp>
+using namespace cv;
+
+Mat myPow(Mat& src, double pow)
+{
+	Mat dst;
+	src.convertTo(dst, CV_32F, 1 / 255.0F);
+	cv::pow(dst, pow, dst);
+	dst.convertTo(dst, CV_8U, 255);
+	return dst;
+}
+
+Mat mylog(Mat &src)
+{
+	Mat dst;
+	src.convertTo(dst, CV_32F, 1 / 255.0F);
+	log(dst + 1, dst);
+	dst /= std::log(2.0);
+	dst.convertTo(dst, CV_8U, 255);
+	return dst;
+}
+int main(void) {
+	Mat src = imread("sample.bmp", IMREAD_REDUCED_GRAYSCALE_2);
+	if (!src.empty()) {
+		Mat dst;
+		//threshold(src, dst, 128, 255, THRESH_BINARY);
+		dst = mylog(src);
+		dst = mylog(dst);
+		dst = mylog(dst);
+		dst = mylog(dst);
+		dst = mylog(dst);
+		imshow("Source", src);
+		imshow("Log", dst);
+		imshow("BlackWhite", 255 - src);
+		imshow("darker", myPow(src, 2.0));
+		imshow("lighter", myPow(src, 0.5));
+		waitKey(0);
+	}
+	return 0;
+}*/
+
+
+/*#include <opencv2/opencv.hpp>
+using namespace cv;
+// Compute and show histogram of an image
+int main(void)
+{
+	Mat src = imread("sample.bmp", IMREAD_REDUCED_GRAYSCALE_2);
+	if (!src.empty()) {
+		// Compute and normalize histogram
+		int histSize = 256;
+		float range[] = { 0, 256 };
+		const float* histRange = { range };
+		Mat hist;
+		calcHist(&src, 1, 0, noArray(), hist, 1, &histSize, &histRange);
+		normalize(hist, hist, 0, 389, NORM_MINMAX);
+		// Draw the histogram
+		int hist_w = 512, hist_h = 400, bin_w = (double)hist_w / histSize + 0.5;
+		Mat histImage(hist_h, hist_w, CV_8U, Scalar(255));
+		for (int i = 0; i < histSize; i++) {
+			line(histImage, Point(bin_w * i, hist_h), Point(bin_w * i, hist_h - hist.at<float>(i)), Scalar(0));
+		}
+		// Show Histogram
+		imshow("Histogram", histImage);
+		waitKey(0);
+	}
+	return(0);
+}*/
+
+
+#include <opencv2/opencv.hpp>
+using namespace cv;
+// Histogram Equalization – HSV
+int main(void) {
+	Mat src = imread("sample1.bmp", IMREAD_REDUCED_COLOR_2);
+	Mat src1 = imread("sample2.bmp", IMREAD_REDUCED_COLOR_2);
+	if (!src.empty()) {
+		Mat dst, Channels[3];
+		//Histogram equalization
+		cvtColor(src, dst, COLOR_BGR2HSV);
+		split(dst, Channels); // split color channels
+		equalizeHist(Channels[2], Channels[2]); //Proces V channel only
+		merge(Channels, 3, dst);
+		cvtColor(dst, dst, COLOR_HSV2BGR);
+		//Show results
+		imshow("Source", src);
+		imshow("Destination", dst);
+		Mat dst1, Channel[3];
+		//Histogram equalization
+		cvtColor(src1, dst1, COLOR_BGR2HSV);
+		split(dst1, Channel); // split color channels
+		equalizeHist(Channel[2], Channel[2]); //Proces V channel only
+		merge(Channel, 3, dst1);
+		cvtColor(dst1, dst1, COLOR_HSV2BGR);
+		//Show results
+		imshow("Source2", src1);
+		imshow("Destination2", dst1);
+		waitKey(0);
+	}
+	return(0);
+}
