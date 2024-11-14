@@ -1,0 +1,89 @@
+/*#include <opencv2/opencv.hpp>
+#include <iostream>
+using namespace cv;
+using namespace std;
+#define MASK_SIZE 3
+// Applying the mean filter on the input image
+int main(void) {
+	Mat src, dst, dst1;
+	src = imread("sample.bmp", IMREAD_REDUCED_GRAYSCALE_2);
+	if (src.data) {
+		//Generate mask of mean filter and applying the filter
+		Mat mask1 = Mat::ones(MASK_SIZE, MASK_SIZE, CV_32F) / (float)(MASK_SIZE * MASK_SIZE);
+		Mat mask2 = (Mat_<double>(3, 3) << 1, 2, 1, 2, 4, 2, 1, 2, 1) / 16;
+		filter2D(src, dst, src.depth(), mask1, Point(MASK_SIZE / 2, MASK_SIZE / 2)); // anchor = center point
+		filter2D(src, dst1, src.depth(), mask2, Point(MASK_SIZE / 2, MASK_SIZE / 2)); // anchor = center point
+		imshow("Source", src);
+		imshow("Destination", dst);
+		imshow("Destination1", dst1);
+		waitKey(0);
+	}
+	else cout << "Could not open or find the image" << endl;
+	return 0;
+}*/
+
+#include <opencv2/opencv.hpp>
+using namespace cv;
+#define MAX_PERCENT 50
+
+class UserData {
+public:
+	UserData():percent(0), kSize(3){}
+	Mat src;
+	int percent;
+	int kSize;
+};
+//percentage of salt and pepper noices
+// Add pepper and salt noise to image
+void pepperSalt(Mat& src, Mat& dst, int percent)
+{
+	//Generate random matrix, pepper and salt masks
+	Mat randMtx = Mat::zeros(src.size(), CV_8U);
+	randu(randMtx, 0, 255);
+	Mat pepperMask = randMtx < 2.55 * percent; //Generate the mask of pepper noice
+	Mat saltMask = randMtx > 255 - 2.55 * percent; //Generate the mask of salt noice
+	//Add the pepper and salt noise to image
+	dst = src.clone();
+	dst.setTo(255, saltMask); //Add salt noice
+	dst.setTo(0, pepperMask); //Add pepper noice
+}
+
+void onchange(int percent, void* data)
+{
+	UserData& udata = *(UserData *)data;
+	Mat dst ,dst1;
+	pepperSalt(udata.src, dst, udata.percent);
+	imshow("Noise Image", dst);
+	medianBlur(dst, dst1, udata.kSize);
+	imshow("Moise Image - medianBlur", dst1);
+}
+int main(void) {
+	UserData udata;
+	udata.src = imread("sample.bmp", IMREAD_REDUCED_GRAYSCALE_2);
+	if (!udata.src.empty()) {
+		//Show results
+		imshow("Source", udata.src);
+		onchange(udata.percent, &udata);
+		createTrackbar("PERCENT", "Source", &udata.percent, MAX_PERCENT, onchange, &udata);
+		waitKey(0);
+	}
+	return(0);
+}
+
+/*#include <opencv2/opencv.hpp>
+using namespace cv;
+#define K_SIZE 5 // width of the median filter
+// Applying the median filter to input image
+int main(void) {
+	Mat src = imread("sample.bmp", IMREAD_REDUCED_GRAYSCALE_2);
+	if (!src.empty()) {
+		Mat dst;
+		//Median filter
+		medianBlur(src, dst, K_SIZE);
+		//Show results
+		imshow("Source", src);
+		imshow("Result", dst);
+		waitKey(0);
+	}
+	return(0);
+}*/
