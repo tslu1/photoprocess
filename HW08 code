@@ -77,7 +77,7 @@ Mat myIDFT(Mat& F)
 
 void filter(Mat& F)
 {
-	Mat_<Vec2f> H = Mat(F.rows, F.cols, CV_32FC2);
+	Mat_<Vec2f> H = Mat(F.rows, F.cols, CV_32FC2, Scalar(1, 1));
 	int cx = F.cols / 2;
 	int cy = F.rows / 2;
 	line(H, Point(cx, 0), Point(cx, H.cols - 1), Scalar(0, 0), 3);
@@ -90,7 +90,7 @@ void filter(Mat& F)
 
 int main(void)
 {
-	Mat f = imread("noisyImage.bmp", IMREAD_REDUCED_GRAYSCALE_2);
+	Mat f = imread("noisyImage.bmp", IMREAD_GRAYSCALE);
 	if (!f.empty()) {
 		f.convertTo(f, CV_32F, 1.f / 255);
 		Mat F = myDFT(f);
