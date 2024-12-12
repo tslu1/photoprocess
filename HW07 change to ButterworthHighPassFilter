@@ -104,6 +104,7 @@ void ButterworthHighPassFilter(Mat& F, int d0, int n)
 	for (int u = 0; u < F.rows; u++) {
 		for (int v = 0; v < F.cols; v++) {
 			float d = sqrt((float)((u - cy) * (u - cy) + (v - cx) * (v - cx)));
+                        if (d == 0)H(u, v)[0] = 0;
 			H(u, v)[0] = (float)1 / (1+pow((d0 / d),2*n));
 			H(u, v)[1] = H(u, v)[0];
 		}
