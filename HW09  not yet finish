@@ -2,13 +2,6 @@
 #include <opencv2/opencv.hpp>
 using namespace cv;
 
-class UserData {
-public:
-	Mat src;
-	int D0 = 100;
-	int n = 1;
-};
-
 void showFreq(String winName, Mat& F)
 {
 	Mat planes[2], Fmag;
@@ -46,7 +39,7 @@ void swapFreq(Mat& F)
 	tmp.copyTo(q2);
 }
 
-Mat myDFT(Mat& f)
+Mat myDFT(const Mat& f)
 {
 	Mat F; //frequency data
 	Mat padded; //Padded image
@@ -64,64 +57,93 @@ Mat myDFT(Mat& f)
 	return F;
 }
 
-Mat myIDFT(Mat& F)
+Mat myIDFT(const Mat& F)
 {
+	Mat tmp = F.clone();
 	Mat planes[2];
-	swapFreq(F);
-	idft(F, F, DFT_SCALE);
-	split(F, planes);
-	return planes[0].clone();
+	swapFreq(tmp);
+	idft(tmp, tmp, DFT_SCALE);
+	split(tmp, planes);
+	return planes[0];
 }
 
-void turbulence(Mat& F, double k)
+Mat degradeFilter(const Mat& F, double k)
 {
-	Mat_<Vec2f> H = Mat(F.rows, F.cols, CV_32FC2);
+	Mat tmp = F.clone();
+	Mat H = Mat(tmp.size(), CV_32FC2, Scalar(1, 1));
 	int cx = F.cols / 2;
 	int cy = F.rows / 2;
 	for (int u = 0; u < F.rows; u++) {
 		for (int v = 0; v < F.cols; v++) {
 			//float d = sqrt((float)((u - cy) * (u - cy) + (v - cx) * (v - cx)));
 			//if (d == 0)H(u, v)[0] = 0;
-			H(u, v)[0] = (float)exp(-k * pow(u * u + v * v, 5 / 6));
-			H(u, v)[1] = H(u, v)[0];
+			int u1 = u - cy;
+			int v1 = v - cx;
+			double degH = exp(-k * pow((u1 * u1 + v1 * v1), 5 / 6.));
+			H.at<Vec2f>(u, v)[0] = degH;
+			H.at<Vec2f>(u, v)[1] = degH;
 		}
 	}
-	F = F.mul(H);
-	showMask("Mask H(u,v)", H);
+	tmp = tmp.mul(H);
+	showMask("H of degrade", H);
+	return tmp;
 }
 
-void antiturbulence(Mat& F, float k)
+Mat degradeImage(const Mat& f, double k)
 {
-	Mat_<Vec2f> H = Mat(F.rows, F.cols, CV_32FC2);
+	Mat F = myDFT(f);
+	Mat G = degradeFilter(F, k);
+	Mat g = myIDFT(G);
+	showFreq("Frequency of original image", F);
+	showFreq("Frequency of degrade image", G);
+	return g;
+}
+
+Mat recoveryFilter(const Mat& F, double k)
+{
+	Mat tmp = F.clone();
+	Mat H = Mat(tmp.size(), CV_32FC2, Scalar(1, 1));
+	Mat J(tmp.rows, tmp.cols, CV_32FC2);
 	int cx = F.cols / 2;
 	int cy = F.rows / 2;
 	for (int u = 0; u < F.rows; u++) {
 		for (int v = 0; v < F.cols; v++) {
 			//float d = sqrt((float)((u - cy) * (u - cy) + (v - cx) * (v - cx)));
 			//if (d == 0)H(u, v)[0] = 0;
-			H(u, v)[0] = (float)exp(-k * pow(u * u + v * v, 5 / 6));
-			H(u, v)[1] = H(u, v)[0];
+			int u1 = u - cy;
+			int v1 = v - cx;
+			double degH = 1. / exp(-k * pow((u1 * u1 + v1 * v1), 5 / 6.));
+			//int dist = sqrt(u1 * u1 + v1 * v1);
+			//if (dist > r)degH = 0;
+			H.at<Vec2f>(u, v)[0] = degH;
+			H.at<Vec2f>(u, v)[1] = degH;
 		}
 	}
-	F = F.mul(H);
-	showMask("Mask H(u,v)", H);
+	tmp = tmp.mul(H);
+	showMask("H of recovery", H);
+	return tmp;
+}
+
+Mat recoveryImage(const Mat& f, double k)
+{
+	Mat F = myDFT(f);
+	Mat G = recoveryFilter(F, k);
+	Mat g = myIDFT(G);
+	showFreq("Frequency of recovery image", G);
+	return g;
 }
 
 int main(void)
 {
-	Mat f = imread("sample.bmp", IMREAD_GRAYSCALE);
+	Mat f = imread("sample.bmp", IMREAD_REDUCED_GRAYSCALE_4);
 	if (!f.empty()) {
-		f.convertTo(f, CV_32F, 1.f / 255);
-		Mat F = myDFT(f);
-		imshow("Source", f);
-		showFreq("F(u,v)", F);
-		//onchange(udata.D0, &udata);		
-		turbulence(F, 0.001);
-		showFreq("turbulence G(u,v)", F);
-		imshow("after turbulence", myIDFT(F));
-		Mat G = myDFT(f);
-
+		Mat g = f.clone();
+		imshow("original image", f);
+		g.convertTo(g, CV_32F, 1.f / 255);
+		Mat deg1 = degradeImage(g, 0.005);
+		imshow("Degrade image", deg1);
+		Mat rec1 = recoveryImage(deg1, 0.0035);
+		imshow("Recovery image", rec1);
 		waitKey(0);
 	}
 	return(0);
-}
