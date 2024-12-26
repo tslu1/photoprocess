@@ -1,0 +1,53 @@
+#include <opencv2/opencv.hpp>
+using namespace cv;
+//Illuminant definition
+/*#define ILL_A 109.850, 100.0, 35.585
+#define ILL_D50 96.422, 100.0, 82.521
+#define ILL_D55 95.682, 100.0, 92.149
+#define ILL_D65 95.047, 100.0, 108.883
+#define ILL_D75 94.972, 100.0, 122.638
+//Change Illuminant
+Mat changeIlluminant(Mat& src, Scalar_<float> srcIll, Scalar_<float> dstIll) {
+	Mat xyz, dst;
+	//Generate transform matrix
+	Scalar_<float> ratio(dstIll[0] / srcIll[0],
+		dstIll[1] / srcIll[1],
+		dstIll[2] / srcIll[2]);
+	Mat ratioMat(src.size(), CV_32FC3, ratio);
+	//Convert colorspace
+	src.convertTo(dst, CV_32FC3, 1.f / 255);
+	cvtColor(dst, xyz, COLOR_BGR2XYZ);
+	xyz = xyz.mul(ratioMat);
+	cvtColor(xyz, dst, COLOR_XYZ2BGR);
+	return dst;
+}
+
+//Change Illuminant of input image
+int main(void) {
+	Mat src = imread("sample.bmp", IMREAD_REDUCED_COLOR_2);
+	if (!src.empty()) {
+		//Change Illuminant
+		Scalar_<float> srcILL(ILL_A);
+		Scalar_<float> dstILL(ILL_D75);
+		Mat dst = changeIlluminant(src, srcILL, dstILL);
+		//Show Result
+		imshow("Source", src);
+		imshow("Destination", dst);
+		waitKey(0);
+	}
+	return 0;
+}*/
+
+int main(void)
+{
+	Mat src = imread("sample.bmp", IMREAD_REDUCED_COLOR_2);
+	if (!src.empty())
+	{
+		Mat hsv, hsvPlanes[3], incSat, decSat, tmp;
+		cvtColor(src, hsv, COLOR_BGR2HSV);
+		split(hsv, hsvPlanes);
+		tmp = hsvPlanes[0].clone();
+		hsvPlanes[0] *= 2;
+		merge(hsvPlanes, 3, incSat);
+	}
+}
